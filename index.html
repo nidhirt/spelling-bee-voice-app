@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spelling Bee Sprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <p class="badge">SPELLING BEE</p>
+      <h1>Spelling Bee Sprint</h1>
+      <p class="subtitle">Hear the word and spell it out loud.</p>
+    </section>
+
+    <section class="game-card" aria-live="polite">
+      <div class="top-controls">
+        <div class="side-stat"><span class="hud-label">Score</span><strong id="score">0/0 correct</strong></div>
+        <button id="startBtn" type="button">Start Spelling</button>
+        <div class="side-stat"><span class="hud-label">Time</span><strong id="timer">60s</strong></div>
+      </div>
+
+      <div class="level-row">
+        <label for="levelSelect">Bee Level</label>
+        <select id="levelSelect">
+          <option value="level1">Level 1</option>
+          <option value="level2">Level 2</option>
+          <option value="level3">Level 3</option>
+        </select>
+      </div>
+
+      <div class="prompt-area">
+        <p id="roundText">Press Start Spelling to begin.</p>
+        <button id="speakWord" class="ghost-btn" type="button" disabled>Hear Word</button>
+      </div>
+
+      <div class="button-row">
+        <button id="skipBtn" class="ghost-btn" type="button" disabled>Skip</button>
+      </div>
+
+      <p id="infoText" class="info-text">Say “meaning”, “origin”, or “use in a sentence” any time during a round.</p>
+      <p id="feedback" class="feedback"></p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
