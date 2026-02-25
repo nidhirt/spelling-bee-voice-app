@@ -45,18 +45,15 @@ If `LEARNERS_API_KEY` is missing, the app does **not** call Merriam-Webster and 
 
 ## 2) Deployment setup
 
-For static hosts, environment variables are not directly available in the browser at runtime. Inject them at deploy/build time.
+For static hosts, environment variables are not directly available in the browser at runtime. This project now uses `vercel.json` to generate `env.js` during build from `LEARNERS_API_KEY`.
 
-Recommended pattern:
+Vercel steps:
 
-1. Store `LEARNERS_API_KEY` in your platform secrets (only needed for MW Learner's API).
-2. Generate an `env.js` file during deployment with:
+1. Project -> Settings -> Environment Variables
+2. Add key: `LEARNERS_API_KEY`
+3. Save and redeploy
 
-```js
-window.LEARNERS_API_KEY = "...";
-```
-
-3. Ensure `env.js` is loaded before `script.js`.
+`index.html` loads `env.js` before `script.js`, so the key is available at runtime.
 
 ## Security note
 
