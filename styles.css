@@ -223,6 +223,8 @@ button:focus-visible {
 .button-row {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   margin-top: 0.9rem;
 }
 

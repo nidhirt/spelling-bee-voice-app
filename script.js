@@ -504,6 +504,8 @@ const startBtn = document.getElementById("startBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const skipBtn = document.getElementById("skipBtn");
 const speakWordBtn = document.getElementById("speakWord");
+const endLevelBtn = document.getElementById("endLevelBtn");
+const nextLevelBtn = document.getElementById("nextLevelBtn");
 
 let score = 0;
 let totalWords = 0;
@@ -625,6 +627,8 @@ function setControls(active) {
   skipBtn.disabled = !active;
   speakWordBtn.disabled = !active;
   pauseBtn.disabled = !active;
+  endLevelBtn.disabled = !active;
+  nextLevelBtn.disabled = !active;
   startBtn.disabled = active;
   levelSelect.disabled = active;
 }
@@ -646,6 +650,8 @@ function setPauseState(paused) {
   pauseBtn.textContent = paused ? "Resume" : "Stop";
   skipBtn.disabled = paused || !gameActive;
   speakWordBtn.disabled = paused || !gameActive;
+  endLevelBtn.disabled = !gameActive;
+  nextLevelBtn.disabled = !gameActive;
   if (paused) {
     if (timerId) clearInterval(timerId);
     stopListening();
@@ -797,6 +803,22 @@ function cleanWikiMarkup(text) {
     .replace(/[|_*#]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function sanitizeSpeechText(text, { collapseWordRepeats = false } = {}) {
+  if (!text) return "";
+  let cleaned = String(text)
+    .replace(/[`*_~^]+/g, " ")
+    .replace(/[()[\]{}<>]/g, " ")
+    .replace(/[=+|\\/]/g, " ")
+    .replace(/&/g, " and ")
+    .replace(/\bet\s+al\.?/gi, "and others")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (collapseWordRepeats) {
+    cleaned = cleaned.replace(/\b([a-z]+)(\s+\1\b)+/gi, "$1");
+  }
+  return cleaned;
 }
 
 function extractEtymologyFromWikitext(wikitext) {
@@ -968,6 +990,7 @@ function normalizeOriginForSpeech(originText) {
     .replace(/^From\s+Wiktionary:\s*/i, "")
     .replace(/^From\s+Merriam-Webster(?:\s+Learner's\s+Dictionary)?:\s*/i, "")
     .trim();
+  cleaned = sanitizeSpeechText(cleaned, { collapseWordRepeats: true });
   cleaned = cleaned.replace(/^(from\s+){2,}/i, "from ");
   return cleaned || "Origin is not available right now.";
 }
@@ -997,17 +1020,17 @@ async function showWordInfo(kind) {
 
   const info = dictionaryCache.get(key);
   if (kind === "meaning") {
-    const text = `Meaning: ${addPronunciationToMeaning(info.meaning, info.pronunciation)}`;
+    const text = sanitizeSpeechText(addPronunciationToMeaning(info.meaning, info.pronunciation), { collapseWordRepeats: true });
     speakWord(text, { resumeListening: true });
     setInfo("Meaning played in audio.");
   }
   if (kind === "origin") {
-    const text = `Origin: ${normalizeOriginForSpeech(info.origin)}`;
+    const text = normalizeOriginForSpeech(info.origin);
     speakWord(text, { resumeListening: true });
     setInfo("Origin played in audio.");
   }
   if (kind === "sentence") {
-    const text = `Sentence: ${info.sentence}`;
+    const text = sanitizeSpeechText(info.sentence, { collapseWordRepeats: true });
     speakWord(text, { resumeListening: true });
     setInfo("Sentence played in audio.");
   }
@@ -1037,6 +1060,12 @@ function endGame(message) {
   roundTextEl.textContent = message;
   setInfo("Round over. Pick a level and start again.");
   setFeedback(`Final score: ${score}/${totalWords} correct`, "ok");
+}
+
+function getNextLevelKey(levelKey) {
+  if (levelKey === "level1") return "level2";
+  if (levelKey === "level2") return "level3";
+  return "";
 }
 
 function handleWrongAnswer(reason = "Not quite") {
@@ -1077,6 +1106,31 @@ function startGame() {
   startTimerLoop();
 }
 
+function endLevelEarly() {
+  if (!gameActive) return;
+  window.speechSynthesis?.cancel();
+  endGame("Level ended. Pick a level and press Start Spelling.");
+}
+
+function goToNextLevel() {
+  if (!gameActive) return;
+  const nextLevel = getNextLevelKey(levelSelect.value);
+  if (!nextLevel) {
+    setFeedback("You are already on the last level.", "bad");
+    return;
+  }
+  window.speechSynthesis?.cancel();
+  gameActive = false;
+  gamePaused = false;
+  clearInterval(timerId);
+  timerId = null;
+  stopListening();
+  setControls(false);
+  levelSelect.value = nextLevel;
+  loadLevelWords();
+  startGame();
+}
+
 startBtn.addEventListener("click", startGame);
 
 skipBtn.addEventListener("click", () => {
@@ -1097,6 +1151,10 @@ pauseBtn.addEventListener("click", () => {
   if (!gameActive) return;
   setPauseState(!gamePaused);
 });
+
+endLevelBtn.addEventListener("click", endLevelEarly);
+
+nextLevelBtn.addEventListener("click", goToNextLevel);
 
 levelSelect.addEventListener("change", () => {
   if (!gameActive) loadLevelWords();
