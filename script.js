@@ -689,14 +689,45 @@ function startListeningLoop() {
 
 function detectVoiceCommand(transcript) {
   const text = transcript.toLowerCase();
+  const normalized = text.replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   const sentencePhrases = ["use in a sentence", "sentence", "say it in a sentence"];
   const meaningPhrases = ["meaning", "what does it mean", "definition"];
-  const originPhrases = ["origin", "etymology", "where does it come from", "where did it come from"];
+  const originPhrases = [
+    "origin",
+    "origins",
+    "etymology",
+    "where does it come from",
+    "where did it come from",
+    "where is it from",
+    "where from",
+    "word history",
+    "history of the word",
+    "origin please",
+    "origion",
+    "orijin"
+  ];
 
-  if (sentencePhrases.some((p) => text.includes(p))) return "sentence";
-  if (meaningPhrases.some((p) => text.includes(p))) return "meaning";
-  if (originPhrases.some((p) => text.includes(p))) return "origin";
+  if (sentencePhrases.some((p) => normalized.includes(p))) return "sentence";
+  if (meaningPhrases.some((p) => normalized.includes(p))) return "meaning";
+  if (originPhrases.some((p) => normalized.includes(p))) return "origin";
   return "";
+}
+
+function looksLikeInfoRequest(transcript) {
+  const text = transcript.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  const hintPhrases = [
+    "meaning",
+    "definition",
+    "sentence",
+    "origin",
+    "etymology",
+    "where from",
+    "what does",
+    "what is",
+    "can you",
+    "tell me"
+  ];
+  return hintPhrases.some((p) => text.includes(p));
 }
 
 function setupRecognition() {
@@ -728,6 +759,11 @@ function setupRecognition() {
     const command = detectVoiceCommand(transcript);
     if (command) {
       showWordInfo(command);
+      return;
+    }
+    if (looksLikeInfoRequest(transcript)) {
+      setInfo("Say “meaning”, “origin”, or “use in a sentence”.");
+      setFeedback("I heard a help request. Please repeat the command.", "");
       return;
     }
 
